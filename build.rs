@@ -1,8 +1,11 @@
-use std::env;
 use std::env::VarError;
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 fn add_sources(build: &mut cc::Build, root: &str, files: &[&str]) {
-    let root = std::path::Path::new(root);
+    let root = Path::new(root);
     build.files(files.iter().map(|src| {
         let mut p = root.join(src);
         p.set_extension("c");
@@ -10,6 +13,64 @@ fn add_sources(build: &mut cc::Build, root: &str, files: &[&str]) {
     }));
 
     build.include(root);
+}
+
+fn configure_freetype_build(build: &mut cc::Build) {
+    build
+        .warnings(false)
+        .include(".")
+        .include("freetype2/include")
+        .include("libpng")
+        .define("FT2_BUILD_LIBRARY", None)
+        .define("FT_CONFIG_OPTION_USE_PNG", None);
+}
+
+fn supports_unix_mmap(out_dir: &Path) -> bool {
+    if env::var_os("CARGO_CFG_UNIX").is_none() {
+        return false;
+    }
+
+    let probe = out_dir.join("ftsystem_mmap_probe.c");
+    fs::write(
+        &probe,
+        r#"
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+int cc_probe(const char *path) {
+  int fd = open(path, O_RDONLY);
+  struct stat stat_buf;
+  void *base;
+
+  if (fd < 0)
+    return 0;
+  if (fstat(fd, &stat_buf) < 0) {
+    close(fd);
+    return 0;
+  }
+
+  base = mmap(0, 4096, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (base != MAP_FAILED)
+    munmap(base, 4096);
+  close(fd);
+  return 0;
+}
+"#,
+    )
+    .unwrap();
+
+    let mut build = cc::Build::new();
+    configure_freetype_build(&mut build);
+    build
+        .file(probe)
+        .cargo_metadata(false)
+        .cargo_warnings(false)
+        .cargo_output(false)
+        .try_compile("ftsystem_mmap_probe")
+        .is_ok()
 }
 
 fn main() {
@@ -33,14 +94,7 @@ fn main() {
     .unwrap();
 
     let mut build = cc::Build::new();
-
-    build
-        .warnings(false)
-        .include(".")
-        .include("freetype2/include")
-        .include("libpng")
-        .define("FT2_BUILD_LIBRARY", None)
-        .define("FT_CONFIG_OPTION_USE_PNG", None);
+    configure_freetype_build(&mut build);
 
     add_sources(
         &mut build,
@@ -64,7 +118,6 @@ fn main() {
             "base/ftpfr",
             "base/ftstroke",
             "base/ftsynth",
-            "base/ftsystem",
             "base/fttype1",
             "base/ftwinfnt",
             "bdf/bdf",
@@ -90,6 +143,16 @@ fn main() {
             "winfonts/winfnt",
         ],
     );
+
+    let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    if supports_unix_mmap(&out_dir) {
+        build
+            .define("HAVE_UNISTD_H", Some("1"))
+            .define("HAVE_FCNTL_H", Some("1"))
+            .file("freetype2/builds/unix/ftsystem.c");
+    } else {
+        build.file("freetype2/src/base/ftsystem.c");
+    }
 
     build.compile("freetype2");
 
