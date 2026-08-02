@@ -8,6 +8,9 @@
 
 use core::ffi::{c_char, c_int, c_long, c_short, c_uchar, c_uint, c_ulong, c_ushort, c_void};
 
+#[cfg(feature = "bundled")]
+extern crate libz_sys;
+
 mod tt_tables;
 pub use crate::tt_tables::*;
 
