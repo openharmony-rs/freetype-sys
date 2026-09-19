@@ -112,13 +112,13 @@ pub struct FT_UnitVector {
 #[derive(Debug, Hash, PartialEq, Eq)]
 #[allow(missing_copy_implementations)]
 pub struct FT_Bitmap {
-    pub rows: c_int,
-    pub width: c_int,
+    pub rows: c_uint,
+    pub width: c_uint,
     pub pitch: c_int,
     pub buffer: *mut c_uchar,
-    pub num_grays: c_short,
-    pub pixel_mode: c_char,
-    pub palette_mode: c_char,
+    pub num_grays: c_ushort,
+    pub pixel_mode: c_uchar,
+    pub palette_mode: c_uchar,
     pub palette: *mut c_void,
 }
 
@@ -284,7 +284,7 @@ pub struct TT_Postscript {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct FT_Span {
-    pub x: c_short,
+    pub x: c_ushort,
     pub len: c_ushort,
     pub coverage: c_uchar,
 }
