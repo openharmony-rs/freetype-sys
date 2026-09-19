@@ -1339,7 +1339,7 @@ extern "C" {
     pub fn FT_Get_Sfnt_LangTag(
         face: FT_Face,
         langID: FT_UInt,
-        alangtag: *mut FT_SfntName,
+        alangtag: *mut FT_SfntLangTag,
     ) -> FT_Error;
 
     pub fn FT_Get_Sfnt_Table(face: FT_Face, tag: FT_Sfnt_Tag) -> *mut c_void;
