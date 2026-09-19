@@ -142,6 +142,8 @@ fn main() {
             .define("HAVE_UNISTD_H", Some("1"))
             .define("HAVE_FCNTL_H", Some("1"))
             .file("freetype2/builds/unix/ftsystem.c");
+    } else if env::var_os("CARGO_CFG_WINDOWS").is_some() {
+        build.file("freetype2/builds/windows/ftsystem.c");
     } else {
         build.file("freetype2/src/base/ftsystem.c");
     }
