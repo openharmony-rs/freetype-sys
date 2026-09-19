@@ -33,7 +33,7 @@ if [ $# -ne 1 ]; then
 fi
 version=$1
 
-# Copies the files of directory $1 that VENDORED matches into the new directory $2.
+# Copies the subset we need of directory $1 into the new directory $2.
 filter() {
     mkdir "$2"
     (
@@ -49,6 +49,8 @@ filter() {
                 fi
             done
         done
+        # png.h expects the generated configuration alongside the public headers.
+        cp "$2/scripts/pnglibconf.h.prebuilt" "$2/pnglibconf.h"
     )
 }
 
@@ -85,6 +87,5 @@ fi
 
 rm -rf libpng
 mv "$work/upstream" libpng
-# Staged right away, before any build: build.rs writes a generated pnglibconf.h into libpng/.
 git add --all --force libpng
 echo "Vendored and staged libpng v$version (upstream commit $commit) in libpng/."
