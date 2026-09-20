@@ -7,7 +7,10 @@ links = "freetype"
 build = "build.rs"
 keywords = ["freetype", "ffi"]
 description = "Low level binding for FreeType font library"
-license = "MIT"
+# This crate itself (the rust bindings) is MIT licensed,
+# freetype2 is FTL or GPL-2.0 or later versions (at the users choice)
+# and libpng is licensed under libpng-2.0
+license = "MIT AND (FTL OR GPL-2.0-or-later) AND libpng-2.0"
 readme = "README.md"
 repository = "https://github.com/PistonDevelopers/freetype-sys.git"
 homepage = "https://github.com/PistonDevelopers/freetype-sys"
